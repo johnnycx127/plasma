@@ -92,6 +92,6 @@ func Test_FindDoubleSpend(t *testing.T) {
     getBlock := func(height uint64) *plasma_rpc.GetBlocksResponse {
         return fixture.GetBlock(height)
     }
-    rootClient.On("GetBlock", mock.MatchedBy(func (uint64) bool { return true })).Return(getBlock)
+    rootClient.On("Block", mock.MatchedBy(func (uint64) bool { return true })).Return(getBlock)
     FindDoubleSpend(rootClient, db, nil, fixture.Exit.toEthExit())
 }

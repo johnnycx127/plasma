@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/rpc/json"
 	"github.com/kyokan/plasma/db"
 	"github.com/kyokan/plasma/node"
+	"github.com/kyokan/plasma/types"
 )
 
 func Start(
@@ -19,7 +20,7 @@ func Start(
 ) {
 	log.Printf("Starting RPC server on port %d.\n", port)
 
-	chch := make(chan chan node.TransactionRequest)
+	chch := make(chan chan types.TransactionRequest)
 
 	txService := &TransactionService{
 		TxChan: chch,

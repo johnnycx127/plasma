@@ -1,12 +1,12 @@
-package chain
+package txdag
 
 import (
     "math/big"
     "sort"
 
     "github.com/ethereum/go-ethereum/common"
-    plasma_common "github.com/kyokan/plasma/common"
     "github.com/pkg/errors"
+        "github.com/kyokan/plasma/chain"
 )
 
 type OutputSortHelper struct {
@@ -15,7 +15,7 @@ type OutputSortHelper struct {
 }
 
 // FindBestUTXOs Finds (at most two) UXTOs to match an amount.
-func FindBestUTXOs(from, to common.Address, amount *big.Int, txs []Transaction, client plasma_common.Client) (*Transaction, error) {
+func FindBestUTXOs(from, to common.Address, amount *big.Int, txs []chain.Transaction) (*chain.Transaction, error) {
     if len(txs) == 0 {
         return nil, errors.New("no suitable UTXOs found")
     }
@@ -24,7 +24,7 @@ func FindBestUTXOs(from, to common.Address, amount *big.Int, txs []Transaction, 
         output := tx.OutputFor(&from) // this call may panic
         if amount.Cmp(output.Amount) == 0 {
             // Found exact match
-            return PrepareSendTransaction(from, to, amount, []Transaction{txs[pos]}, client)
+            return PrepareSendTransaction(from, to, amount, []chain.Transaction{txs[pos]})
         }
         outputs = append(outputs, OutputSortHelper{Position: pos, Amount: output.Amount})
     }
@@ -37,7 +37,7 @@ func FindBestUTXOs(from, to common.Address, amount *big.Int, txs []Transaction, 
     // Amount is less the minimum element, no need to do anything else
     min := outputs[0]
     if min.Amount.Cmp(amount) == 1 { // min > amount
-        return PrepareSendTransaction(from, to, amount, []Transaction{txs[min.Position]}, client)
+        return PrepareSendTransaction(from, to, amount, []chain.Transaction{txs[min.Position]})
     }
     leftBound := int(0)
     rightBound := len(outputs) - 1
@@ -62,23 +62,23 @@ func FindBestUTXOs(from, to common.Address, amount *big.Int, txs []Transaction, 
     if leftBound < rightBound { // Found two outputs that sum up to amount
         first := outputs[leftBound].Position
         second := outputs[rightBound].Position
-        return PrepareSendTransaction(from, to, amount, []Transaction{txs[first], txs[second]}, client)
+        return PrepareSendTransaction(from, to, amount, []chain.Transaction{txs[first], txs[second]})
     }
     if lhs >= 0 && rhs >= 0 { // smallest sum that's greater than amount
         first := outputs[lhs].Position
         second := outputs[rhs].Position
-        return PrepareSendTransaction(from, to, amount, []Transaction{txs[first], txs[second]}, client)
+        return PrepareSendTransaction(from, to, amount, []chain.Transaction{txs[first], txs[second]})
     }
     return nil, errors.New("no suitable UTXOs found")
 }
 
-func PrepareSendTransaction(from, to common.Address, amount *big.Int, utxoTxs []Transaction, client plasma_common.Client) (*Transaction, error) {
-    var input1 *Input
-    var output1 *Output
+func PrepareSendTransaction(from, to common.Address, amount *big.Int, utxoTxs []chain.Transaction) (*chain.Transaction, error) {
+    var input1 *chain.Input
+    var output1 *chain.Output
     totalAmount := big.NewInt(0)
 
     if len(utxoTxs) == 1 {
-        input1 = ZeroInput()
+        input1 = chain.ZeroInput()
 
         utxo := utxoTxs[0].OutputFor(&from)
 
@@ -88,7 +88,7 @@ func PrepareSendTransaction(from, to common.Address, amount *big.Int, utxoTxs []
 
         totalAmount.Set(utxo.Amount)
     } else {
-        input1 = &Input{
+        input1 = &chain.Input{
             BlkNum: utxoTxs[1].BlkNum,
             TxIdx:  utxoTxs[1].TxIdx,
             OutIdx: utxoTxs[1].OutputIndexFor(&from),
@@ -97,32 +97,27 @@ func PrepareSendTransaction(from, to common.Address, amount *big.Int, utxoTxs []
         totalAmount = totalAmount.Add(utxoTxs[0].OutputFor(&from).Amount, utxoTxs[1].OutputFor(&from).Amount)
     }
     if totalAmount.Cmp(amount) == 1 { // totalAmount > amount
-        output1 = &Output{
+        output1 = &chain.Output{
             NewOwner: from,
             Amount:   big.NewInt(0).Sub(totalAmount, amount),
         }
     } else {
-        output1 = ZeroOutput()
+        output1 = chain.ZeroOutput()
     }
 
-    tx := Transaction{
-        Input0: &Input{
+    tx := chain.Transaction{
+        Input0: &chain.Input{
             BlkNum: utxoTxs[0].BlkNum,
             TxIdx:  utxoTxs[0].TxIdx,
             OutIdx: utxoTxs[0].OutputIndexFor(&from),
         },
         Input1: input1,
-        Output0: &Output{
+        Output0: &chain.Output{
             NewOwner: to,
             Amount:   amount,
         },
         Output1: output1,
         Fee:     big.NewInt(0),
-    }
-    var err error
-    tx.Sig0, err = client.SignData(&from, tx.SignatureHash())
-    if err != nil {
-        return nil, err
     }
     if tx.Input1.IsZeroInput() == false {
         //Input1 is valid, set the signature (note that signature is the same)

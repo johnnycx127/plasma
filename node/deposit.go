@@ -8,7 +8,7 @@ import (
 	"github.com/kyokan/plasma/eth"
 )
 
-func StartDepositListener(storage db.PlasmaStorage, sink *TransactionSink, plasma *eth.PlasmaClient) {
+func StartDepositListener(storage db.PlasmaStorage, sink *TransactionSink, plasma eth.Client) {
 	ch := make(chan eth.DepositEvent)
 	sink.AcceptDepositEvents(ch)
 

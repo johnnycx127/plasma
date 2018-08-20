@@ -102,35 +102,3 @@ func encodeAndDecode(t *testing.T, itf interface{}) {
 	require.NoError(t, err)
 	require.Equal(t, itf, itfDecoded)
 }
-
-func randomInput() *Input {
-	return &Input{
-		BlkNum: rand.Uint64(),
-		TxIdx:  rand.Uint32(),
-		OutIdx: uint8(rand.Uint32()),
-	}
-}
-
-func randomSig() []byte {
-	size := 32
-	result := make([]byte, size)
-	rand.Read(result)
-	return result
-}
-
-func randomOutput() *Output {
-	result := Output{}
-	result.Amount = big.NewInt(rand.Int63())
-	buf := make([]byte, 20)
-	rand.Read(buf)
-	for i, _ := range result.NewOwner {
-		result.NewOwner[i] = buf[i]
-	}
-	return &result
-}
-
-func randomAddress() common.Address {
-	buf := make([]byte, 20)
-	rand.Read(buf)
-	return common.BytesToAddress(buf)
-}

@@ -23,7 +23,7 @@ type ClientResponse struct {
 	Id     uint64                    `json:"id"`
 }
 
-func RootNodeListener(rootUrl string, storage db.PlasmaStorage, plasma *eth.PlasmaClient, userAddress string) {
+func RootNodeListener(rootUrl string, storage db.PlasmaStorage, client eth.Client, userAddress string) {
 	rootClient := userclient.NewRootClient(rootUrl)
 	for {
 		log.Println("Watching root node...")

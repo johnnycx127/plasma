@@ -1,4 +1,4 @@
-package plasma
+package node
 
 import (
 	"encoding/hex"
@@ -6,46 +6,8 @@ import (
 
 	"github.com/kyokan/plasma/chain"
 	"github.com/kyokan/plasma/db"
-	"github.com/kyokan/plasma/eth"
-	"github.com/kyokan/plasma/node"
-	"github.com/kyokan/plasma/rpc"
 	"gopkg.in/urfave/cli.v1"
 )
-
-func Start(c *cli.Context) {
-	nodeURL := c.GlobalString("node-url")
-	dburl := c.GlobalString("db")
-
-	plasma := eth.CreatePlasmaClientCLI(c)
-
-	db, storage, err := db.CreateStorage(dburl, plasma)
-
-	if err != nil {
-		log.Panic(err)
-	}
-	defer db.Close()
-
-	client, err := eth.NewClient(nodeURL)
-	if err != nil {
-		log.Panic("Failed to start ETH client: ", err)
-	}
-
-	sink := node.NewTransactionSink(storage, client)
-
-	p := node.NewPlasmaNode(storage, sink, plasma)
-
-	go p.Start()
-
-	go rpc.Start(c.Int("rpc-port"), storage, sink)
-
-	// TODO: ensure that 1 deposit tx is always 1 block
-	go node.StartDepositListener(storage, sink, plasma)
-
-	// TODO: add an exit listener to make sure to add an exit transaction to root node.
-	// Also add an exit block to the plasma contract.
-
-	select {}
-}
 
 func ForceSubmitBlock(c *cli.Context) {
 	merkleRoot, err := hex.DecodeString(c.String("merkle-root"))

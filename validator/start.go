@@ -7,33 +7,31 @@ import (
 
 	"github.com/kyokan/plasma/db"
 	"github.com/kyokan/plasma/eth"
-	"gopkg.in/urfave/cli.v1"
-)
+	"github.com/kyokan/plasma/config"
+	"crypto/ecdsa"
+	"github.com/ethereum/go-ethereum/crypto"
+		)
 
-func Start(c *cli.Context) {
+func Start(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey, rootHost string) error {
 	log.Println("Validator Starting")
 
-	userAddress := c.GlobalString("user-address")
-	dburl := c.GlobalString("db")
-	// TODO: turn this into a client.
-	rootUrl := fmt.Sprintf("http://localhost:%d/rpc", c.Int("root-port"))
-	validatorPort := c.Int("validator-port")
-
-	plasma := eth.CreatePlasmaClientCLI(c)
-
-	db, storage, err := db.CreateStorage(path.Join(dburl, "validator", userAddress), plasma)
-
+	userAddress := crypto.PubkeyToAddress((privateKey.Public()).(ecdsa.PublicKey)).Hex()
+	rootUrl := fmt.Sprintf("http://%s/rpc", rootHost)
+	plasma, err := eth.NewClient(config.NodeURL, config.ContractAddr, privateKey)
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
-	defer db.Close()
+	ldb, storage, err := db.CreateStorage(path.Join(config.DBPath, "validator", userAddress), plasma)
+	if err != nil {
+		return err
+	}
+	defer ldb.Close()
 
 	go RootNodeListener(rootUrl, storage, plasma, userAddress)
-
 	go ExitStartedListener(rootUrl, storage, plasma)
-
-	go Run(validatorPort)
+	go Run(config.RPCPort)
 
 	select {}
+	return nil
 }

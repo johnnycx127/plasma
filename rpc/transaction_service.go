@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/kyokan/plasma/chain"
-	"github.com/kyokan/plasma/node"
+	"github.com/kyokan/plasma/types"
 )
 
 type SendArgs struct {
@@ -22,7 +22,7 @@ type SendResponse struct {
 }
 
 type TransactionService struct {
-	TxChan chan<- chan node.TransactionRequest
+	TxChan chan<- chan types.TransactionRequest
 }
 
 func (t *TransactionService) Send(r *http.Request, args *SendArgs, reply *SendResponse) error {
@@ -33,14 +33,14 @@ func (t *TransactionService) Send(r *http.Request, args *SendArgs, reply *SendRe
 	amount := new(big.Int)
 	amount.SetString(args.Amount, 0)
 
-	req := node.TransactionRequest{
+	req := types.TransactionRequest{
 		Transaction: args.Transaction,
 		From:        from,
 		To:          to,
 		Amount:      amount,
 	}
 
-	ch := make(chan node.TransactionRequest)
+	ch := make(chan types.TransactionRequest)
 	t.TxChan <- ch
 	ch <- req
 	res := <-ch

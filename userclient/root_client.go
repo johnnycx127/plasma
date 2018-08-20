@@ -66,7 +66,7 @@ func SendCLI(c *cli.Context) {
 		log.Printf("Failed to unmarshal UTXO response: %s", err.Error())
 		return
 	}
-	tx, err := chain.FindBestUTXOs(common.HexToAddress(userAddress), common.HexToAddress(toAddr), big.NewInt(amount), utxos.Transactions, client)
+	tx, err := chain.FindBestUTXOs(common.HexToAddress(toAddr), big.NewInt(amount), utxos.Transactions, client)
 	if err != nil {
 		log.Printf("Could not find a suitable input for send: %s", err.Error())
 		return
@@ -167,7 +167,7 @@ func (c client) GetBlock(height uint64) *plasma_rpc.GetBlocksResponse {
 	args := &plasma_rpc.GetBlocksArgs{
 		Height: height,
 	}
-	endpoint := "Block.GetBlock"
+	endpoint := "Block.Block"
 
 	response := request(c.RootURL, args, endpoint)
 

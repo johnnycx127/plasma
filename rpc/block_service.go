@@ -85,7 +85,7 @@ func (t *BlockService) GetUTXOs(r *http.Request, args *GetUTXOsArgs, reply *GetU
 }
 
 func (t *BlockService) GetBalance(r *http.Request, args *GetBalanceArgs, reply *GetBalanceResponse) error {
-	log.Println("Received Block.GetBalance request.")
+	log.Println("Received Block.Balance request.")
 
 	userAddress := common.HexToAddress(args.UserAddress)
 

@@ -14,7 +14,7 @@ import (
 	"github.com/kyokan/plasma/eth"
 )
 
-func ExitStartedListener(rootUrl string, storage db.PlasmaStorage, plasma *eth.PlasmaClient) {
+func ExitStartedListener(rootUrl string, storage db.PlasmaStorage, plasma eth.Client) {
 	rootClient := userclient.NewRootClient(rootUrl)
 	for {
 		idx, err := storage.LastExitEventIdx()
@@ -35,18 +35,22 @@ func ExitStartedListener(rootUrl string, storage db.PlasmaStorage, plasma *eth.P
 
 				exitId := event.ExitId
 
-				exit := plasma.GetExit(exitId)
+				exit, err := plasma.Exit(exitId)
+				if err != nil {
+					log.Println("Caught error querying exit:", err)
+					continue
+				}
 
-				txs, blockId, txId := FindDoubleSpend(rootClient, storage, plasma, exit)
-
+				txs, blockId, txId := FindDoubleSpend(rootClient, storage, exit)
 				if txs != nil && txId != nil {
-					plasma.ChallengeExit(
-						exitId,
-						txs,
-						blockId,
-						txId,
-					)
+					opts := &eth.ChallengeExitOpts{
+						ExitId: exitId,
+						Txs: txs,
+						BlockNum: blockId,
+						TxIndex: uint(txId.Uint64()),
+					}
 
+					plasma.ChallengeExit(opts)
 					time.Sleep(3 * time.Second)
 
 					events, _ := plasma.ChallengeSuccessFilter(0)
@@ -87,7 +91,7 @@ func ExitStartedListener(rootUrl string, storage db.PlasmaStorage, plasma *eth.P
 	}
 }
 
-func FindDoubleSpend(rootClient userclient.RootClient, storage db.PlasmaStorage, plasma *eth.PlasmaClient, exit eth.Exit) ([]chain.Transaction, *big.Int, *big.Int) {
+func FindDoubleSpend(rootClient userclient.RootClient, storage db.PlasmaStorage, exit *eth.Exit) ([]chain.Transaction, *big.Int, *big.Int) {
 	latestBlock, err := storage.LatestBlock()
 
 	if err != nil {

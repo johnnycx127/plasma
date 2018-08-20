@@ -9,7 +9,7 @@ type RootClient struct {
 	mock.Mock
 }
 
-// GetBlock provides a mock function with given fields: height
+// Block provides a mock function with given fields: height
 func (_m *RootClient) GetBlock(height uint64) *rpc.GetBlocksResponse {
 	ret := _m.Called(height)
 

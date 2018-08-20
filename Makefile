@@ -7,8 +7,12 @@ migrate:
 	$(MAKE) -C ./contracts migrate
 
 build:
+	go build -o ./build/plasma ./cmd/plasma/main.go
+
+abigen:
 	$(MAKE) -C ./contracts abigen
-	go install ./...
+
+build-all: abigen build
 
 start: compile
 	@./bin/start
@@ -18,3 +22,5 @@ clean:
 	rm -rf ~/.plasma
 
 fresh-start: clean start
+
+.PHONY: build deps

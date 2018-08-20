@@ -20,7 +20,7 @@ func GetBalance(c *cli.Context) {
 
 	addr := common.HexToAddress(userAddress)
 
-	res, err := client.GetBalance(addr)
+	res, err := client.Balance(addr)
 
 	if err != nil {
 		log.Fatalf("Failed to get balance: %v", err)
