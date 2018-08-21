@@ -3,6 +3,7 @@ syntax = "proto3";
 package pb;
 
 service Root {
+    rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse) {}
     rpc GetUTXOs (GetUTXOsRequest) returns (GetUTXOsResponse) {}
     rpc GetBlock (GetBlockRequest) returns (GetBlockResponse) {}
     rpc Send (SendRequest) returns (SendResponse) {}
@@ -45,6 +46,14 @@ message Transaction {
     BigInt fee = 7;
     BigInt BlockNum = 8;
     uint32 TxIdx = 9;
+}
+
+message GetBalanceRequest {
+    bytes address = 1;
+}
+
+message GetBalanceResponse {
+    BigInt balance = 1;
 }
 
 message GetUTXOsRequest {

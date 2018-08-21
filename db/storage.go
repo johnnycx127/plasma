@@ -479,7 +479,7 @@ func (ps *Storage) SpendableTxs(addr *common.Address) ([]chain.Transaction, erro
     }
 
     var ret []chain.Transaction
-    for key, _ := range earnMap {
+    for key := range earnMap {
         _, blkNum, txIdx, _, err := parseSuffix([]byte(key))
         if err != nil {
             return nil, err

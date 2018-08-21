@@ -18,6 +18,7 @@ import (
 	"github.com/kyokan/plasma/rpc"
 	"github.com/pkg/errors"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 func initHandler(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey, pCtx context.Context) (context.CancelFunc, eth.Client, db.PlasmaStorage, error) {
@@ -60,7 +61,7 @@ func Exit(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey, rootHost st
 
 	fmt.Printf("Exit starting for blocknum: %d, txIndex: %d, oIndex: %d\n", blockNum, txIndex, oIndex)
 
-	conn, err := grpc.Dial(fmt.Sprintf("http://%s/rpc", rootHost))
+	conn, err := grpc.Dial(rootHost)
 	if err != nil {
 		return err
 	}
@@ -95,7 +96,7 @@ func Deposit(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey, amount *
 	}
 
 	fmt.Printf("Deposit starting for amount: %s\n", amount.Text(10))
-	userAddress := crypto.PubkeyToAddress((privateKey.Public()).(ecdsa.PublicKey))
+	userAddress := crypto.PubkeyToAddress(*(privateKey.Public()).(*ecdsa.PublicKey))
 	t := createDepositTx(userAddress, amount)
 	client.Deposit(amount, &t)
 	time.Sleep(3 * time.Second)
@@ -105,6 +106,27 @@ func Deposit(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey, amount *
 	}
 
 	fmt.Printf("Last child block: %v\n", curr)
+	return nil
+}
+
+func GetBalance(rootHost string, address common.Address) error {
+	log.Info("Received GetBalance request.")
+
+	conn, err := grpc.Dial(rootHost, grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	rc := pb.NewRootClient(conn)
+	res, err := rc.GetBalance(context.Background(), &pb.GetBalanceRequest{
+		Address: address.Bytes(),
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Balance: %s\n", rpc.DeserializeBig(res.Balance).Text(10))
 	return nil
 }
 

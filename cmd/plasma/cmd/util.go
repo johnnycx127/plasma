@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/viper"
 	"crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 )
 
 func NewGlobalConfig() *config.GlobalConfig {
@@ -20,7 +21,7 @@ func ParsePrivateKey() (*ecdsa.PrivateKey, error) {
 	privateKeyStr := viper.GetString(FlagPrivateKey)
 	privateKey, err := crypto.HexToECDSA(privateKeyStr)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to parse private key")
 	}
 	return privateKey, nil
 }

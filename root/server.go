@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"github.com/kyokan/plasma/node"
 	"github.com/kyokan/plasma/types"
+	"log"
 )
 
 type Server struct {
@@ -30,13 +31,15 @@ func NewServer(ctx context.Context, storage db.PlasmaStorage, sink *node.Transac
 func (r *Server) Start(port int) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
+		log.Println("error", err)
 		return err
 	}
 
 	s := grpc.NewServer()
 	pb.RegisterRootServer(s, r)
 	if err := s.Serve(lis); err != nil {
-	    return err
+		log.Println("error", err)
+		return err
 	}
 
 	go func() {
@@ -45,6 +48,18 @@ func (r *Server) Start(port int) error {
 	}()
 
 	return nil
+}
+
+func (r *Server) GetBalance(ctx context.Context, req *pb.GetBalanceRequest) (*pb.GetBalanceResponse, error) {
+	addr := common.BytesToAddress(req.Address)
+	bal, err := r.storage.Balance(&addr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetBalanceResponse{
+		Balance: rpc.SerializeBig(bal),
+	}, nil
 }
 
 func (r *Server) GetUTXOs(ctx context.Context, req *pb.GetUTXOsRequest) (*pb.GetUTXOsResponse, error) {

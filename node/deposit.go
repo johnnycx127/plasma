@@ -19,9 +19,16 @@ func StartDepositListener(storage db.PlasmaStorage, sink *TransactionSink, plasm
 			log.Fatalf("Failed to get last deposit event idx: %v", err)
 		}
 
+		if idx == 0 {
+			idx = 1
+		}
+
 		log.Printf("Looking for deposit events at block number: %d\n", idx)
 
-		events, lastIdx := plasma.DepositFilter(idx)
+		events, lastIdx, err := plasma.DepositFilter(idx)
+		if err != nil {
+			log.Println("caught error filtering deposits:", err)
+		}
 
 		if len(events) > 0 {
 			count := uint64(0)
@@ -42,6 +49,7 @@ func StartDepositListener(storage db.PlasmaStorage, sink *TransactionSink, plasm
 
 			storage.SaveDepositEventIdx(lastIdx + 1)
 		} else {
+			storage.SaveDepositEventIdx(lastIdx + 1)
 			log.Printf("No deposit events at block %d.\n", idx)
 		}
 

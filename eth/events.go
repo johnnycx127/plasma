@@ -8,41 +8,38 @@ import (
 	"github.com/kyokan/plasma/contracts/gen/contracts"
 )
 
-func (c *clientState) DepositFilter(
-	start uint64,
-) ([]contracts.PlasmaDeposit, uint64) {
+func (c *clientState) DepositFilter(start uint64) ([]contracts.PlasmaDeposit, uint64, error) {
+	header, err := c.client.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	end := header.Number.Uint64()
+
 	opts := bind.FilterOpts{
 		Start:   start,
-		End:     nil, // TODO: end doesn't seem to work
+		End:     &end, // TODO: end doesn't seem to work
 		Context: context.Background(),
 	}
 
 	itr, err := c.contract.FilterDeposit(&opts)
-
 	if err != nil {
 		log.Fatalf("Failed to filter deposit events: %v", err)
 	}
 
 	next := true
-
 	var events []contracts.PlasmaDeposit
-
-	var lastBlockNumber uint64
-
 	for next {
 		if itr.Event != nil {
-			lastBlockNumber = itr.Event.Raw.BlockNumber
 			events = append(events, *itr.Event)
 		}
 		next = itr.Next()
 	}
 
-	return events, lastBlockNumber
+	return events, end, nil
 }
 
-func (c *clientState) ExitStartedFilter(
-	start uint64,
-) ([]contracts.PlasmaExitStarted, uint64) {
+func (c *clientState) ExitStartedFilter(start uint64) ([]contracts.PlasmaExitStarted, uint64) {
 	opts := bind.FilterOpts{
 		Start:   start,
 		End:     nil, // TODO: end doesn't seem to work
@@ -72,9 +69,7 @@ func (c *clientState) ExitStartedFilter(
 	return events, lastBlockNumber
 }
 
-func (c *clientState) DebugAddressFilter(
-	start uint64,
-) ([]contracts.PlasmaDebugAddress, uint64) {
+func (c *clientState) DebugAddressFilter(start uint64) ([]contracts.PlasmaDebugAddress, uint64) {
 	opts := bind.FilterOpts{
 		Start:   start,
 		End:     nil, // TODO: end doesn't seem to work
@@ -104,9 +99,7 @@ func (c *clientState) DebugAddressFilter(
 	return events, lastBlockNumber
 }
 
-func (c *clientState) DebugUintFilter(
-	start uint64,
-) ([]contracts.PlasmaDebugUint, uint64) {
+func (c *clientState) DebugUintFilter(start uint64) ([]contracts.PlasmaDebugUint, uint64) {
 	opts := bind.FilterOpts{
 		Start:   start,
 		End:     nil, // TODO: end doesn't seem to work
@@ -136,9 +129,7 @@ func (c *clientState) DebugUintFilter(
 	return events, lastBlockNumber
 }
 
-func (c *clientState) DebugBoolFilter(
-	start uint64,
-) ([]contracts.PlasmaDebugBool, uint64) {
+func (c *clientState) DebugBoolFilter(start uint64) ([]contracts.PlasmaDebugBool, uint64) {
 	opts := bind.FilterOpts{
 		Start:   start,
 		End:     nil, // TODO: end doesn't seem to work

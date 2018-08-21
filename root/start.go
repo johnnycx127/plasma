@@ -3,14 +3,14 @@ package root
 import (
 					"github.com/kyokan/plasma/eth"
 	"github.com/kyokan/plasma/db"
-	"github.com/kyokan/plasma/rpc"
-	"github.com/kyokan/plasma/config"
+		"github.com/kyokan/plasma/config"
 	"crypto/ecdsa"
 	"github.com/kyokan/plasma/node"
 	"context"
 	"os"
 	"os/signal"
 	"path"
+	"log"
 )
 
 func Start(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey) error {
@@ -31,14 +31,12 @@ func Start(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey) error {
 	sink := node.NewTransactionSink(storage)
 	p := node.NewPlasmaNode(storage, sink, plasma)
 	go p.Start()
-	go rpc.Start(config.RPCPort, storage, sink)
 	// TODO: ensure that 1 deposit tx is always 1 block
 	go node.StartDepositListener(storage, sink, plasma)
 
 	server := NewServer(ctx, storage, sink)
-	if err = server.Start(config.RPCPort); err != nil {
-		return err
-	}
+	go server.Start(config.RPCPort)
+	log.Printf("Started RPC server on port %d", config.RPCPort)
 
 	// TODO: add an exit listener to make sure to add an exit transaction to root node.
 	// Also add an exit block to the plasma contract.

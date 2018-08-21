@@ -53,7 +53,7 @@ type Client interface {
 	Block(blockNum *big.Int) (*Block, error)
 	CurrentChildBlock() (*big.Int, error)
 
-	DepositFilter(start uint64) ([]contracts.PlasmaDeposit, uint64)
+	DepositFilter(start uint64) ([]contracts.PlasmaDeposit, uint64, error)
 	ExitStartedFilter(start uint64) ([]contracts.PlasmaExitStarted, uint64)
 	DebugAddressFilter(start uint64) ([]contracts.PlasmaDebugAddress, uint64)
 	DebugUintFilter(start uint64) ([]contracts.PlasmaDebugUint, uint64)
@@ -97,7 +97,7 @@ func (c *clientState) Balance(addr common.Address) (*big.Int, error) {
 }
 
 func (c *clientState) UserAddress() common.Address {
-	return crypto.PubkeyToAddress((c.privateKey.Public()).(ecdsa.PublicKey))
+	return crypto.PubkeyToAddress(*(c.privateKey.Public()).(*ecdsa.PublicKey))
 }
 
 func (c *clientState) Contract() *contracts.Plasma {
