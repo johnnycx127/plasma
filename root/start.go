@@ -14,7 +14,7 @@ import (
 )
 
 func Start(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey) error {
-	_, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	plasma, err := eth.NewClient(config.NodeURL, config.ContractAddr, privateKey)
@@ -34,6 +34,11 @@ func Start(config *config.GlobalConfig, privateKey *ecdsa.PrivateKey) error {
 	go rpc.Start(config.RPCPort, storage, sink)
 	// TODO: ensure that 1 deposit tx is always 1 block
 	go node.StartDepositListener(storage, sink, plasma)
+
+	server := NewServer(ctx, storage, sink)
+	if err = server.Start(config.RPCPort); err != nil {
+		return err
+	}
 
 	// TODO: add an exit listener to make sure to add an exit transaction to root node.
 	// Also add an exit block to the plasma contract.

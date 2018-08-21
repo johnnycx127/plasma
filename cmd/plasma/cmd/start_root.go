@@ -2,17 +2,15 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-		"github.com/spf13/viper"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/viper"
 	"github.com/kyokan/plasma/root"
 )
 
 var startRootCmd = &cobra.Command{
-	Use: "start-root",
+	Use:   "start-root",
 	Short: "starts running a Plasma root node",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		privateKeyStr := viper.GetString(FlagPrivateKey)
-		privateKey, err := crypto.HexToECDSA(privateKeyStr)
+		privateKey, err := ParsePrivateKey()
 		if err != nil {
 			return err
 		}

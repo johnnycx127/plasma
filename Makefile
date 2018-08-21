@@ -12,6 +12,9 @@ build:
 abigen:
 	$(MAKE) -C ./contracts abigen
 
+protogen:
+	protoc -I rpc/proto rpc/proto/root.proto --go_out=plugins=grpc:rpc/pb
+
 build-all: abigen build
 
 start: compile
